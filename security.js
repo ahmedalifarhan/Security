@@ -16,13 +16,11 @@ function binaryToText(binary) {
     const character = String.fromCharCode(value);
     text += character;
   }
-
   return text;
 }
 
-// function generate keystream
+// Function to generate keystream
 function generateKeystream(key) {
-  //The binary key is split into three sections to initialize the three shift registers=> X, Y, and Z;
   let X = Array(19).fill(0);
   let Y = Array(22).fill(0);
   let Z = Array(23).fill(0);
@@ -43,9 +41,8 @@ function generateKeystream(key) {
 
   let keystream = "";
   for (let i = 0; i < binaryKey.length; i++) {
-    //Calculate m (majority)
     let m = (X[8] & Y[10]) | (X[8] & Z[10]) | (Y[10] & Z[10]);
-    //Update registers
+
     if (X[8] == m) {
       let t = X[13] ^ X[16] ^ X[17] ^ X[18];
       X = [t].concat(X.slice(0, 18));
@@ -69,55 +66,54 @@ function generateKeystream(key) {
     Z: Z.join(""),
   };
 }
-//This function encrypts a binary plaintext using keystream
+
+// Function to encrypt plaintext
 function encrypt() {
-  let key = document.getElementById("key").value;
-  let plaintext = document.getElementById("plaintext").value;
-  let binaryPlaintext = textToBinary(plaintext);
-  let result = generateKeystream(key);
-  let keystream = result.keystream;
-  let X = result.X;
-  let Y = result.Y;
-  let Z = result.Z;
+  let key = document.getElementById("key").value; // Get the encryption key from the input field
+  let plaintext = document.getElementById("plaintext").value; // Get the plaintext from the input field
+  let binaryPlaintext = textToBinary(plaintext); // Convert plaintext to binary
 
-  let ciphertext = "";
-  //Perform XOR operation between the binary representation of the plaintext character and the keystream bit;
+  let result = generateKeystream(key); // Generate keystream using the key
+  let keystream = result.keystream; // Extract the keystream
+  let X = result.X; // Extract register X
+  let Y = result.Y; // Extract register Y
+  let Z = result.Z; // Extract register Z
+
+  let ciphertext = ""; // Initialize variable to store the ciphertext
+
+  // Perform XOR operation between the binary representation of each plaintext character and the keystream bit
+  // Loop through the binary plaintext, encrypting each character
   for (let i = 0; i < binaryPlaintext.length; i++) {
-    ciphertext += String(Number(binaryPlaintext[i]) ^ Number(keystream[i]));
+    ciphertext += String(
+      Number(binaryPlaintext[i]) ^ Number(keystream[i % keystream.length])
+    );
+    // Use modulo operator to loop through the keystream if its length is shorter than plaintext's binary length
   }
 
-  //Decrypts a ciphertext string using keystream (binary);
-  function decrypt(ciphertext, keystream) {
-    let decryptedText = "";
-    for (let i = 0; i < ciphertext.length; i++) {
-      // XOR binary representations of ciphertext character and keystream bit
-      decryptedText += String(Number(ciphertext[i]) ^ Number(keystream[i]));
-    }
-    return decryptedText;
-  }
-
+  // Display the encryption result
   let output = document.getElementById("output");
-  output.innerHTML = "<p>X: " + X + "</p>";
-  output.innerHTML += "<p>Y: " + Y + "</p>";
-  output.innerHTML += "<p>Z: " + Z + "</p>";
-  output.innerHTML += "<p>Key binary: " + textToBinary(key) + "</p>";
-  output.innerHTML +=
-    "<p>The length of binary_key is : " + textToBinary(key).length + "</p>";
-  output.innerHTML += "<p>Plain text binary: " + binaryPlaintext + "</p>";
-  output.innerHTML +=
-    "<p>The length of Plain text binary is : " +
-    binaryPlaintext.length +
-    "</p>";
-  output.innerHTML += "<p>Keystream: " + keystream + "</p>";
-  output.innerHTML +=
-    "<p>The length of Keystream is : " + keystream.length + "</p>";
-  output.innerHTML += "<p>Cipher binary: " + ciphertext + "</p>";
-  output.innerHTML +=
-    "<p>The length of ciphertext is : " + ciphertext.length + "</p>";
-  output.innerHTML += "<p>Cipher text: " + binaryToText(ciphertext) + "</p>";
+  output.innerHTML = "<p>X: " + X + "</p>"; // Display register X
+  output.innerHTML += "<p>Y: " + Y + "</p>"; // Display register Y
+  output.innerHTML += "<p>Z: " + Z + "</p>"; // Display register Z
+  output.innerHTML += "<p>Key binary: " + textToBinary(key) + "</p>"; // Display binary representation of the key
+  output.innerHTML += "<p>Plain text binary: " + binaryPlaintext + "</p>"; // Display binary representation of the plaintext
+  output.innerHTML += "<p>Keystream: " + keystream + "</p>"; // Display the generated keystream
+  output.innerHTML += "<p>Cipher binary: " + ciphertext + "</p>"; // Display binary ciphertext
+  output.innerHTML += "<p>Cipher text: " + binaryToText(ciphertext) + "</p>"; // Display ciphertext in text form
 
   // Decrypt ciphertext
-  let decryptedText = decrypt(ciphertext, keystream);
-  output.innerHTML +=
-    "<p>Decrypted text: " + binaryToText(decryptedText) + "</p>";
+  let decryptedText = decrypt(ciphertext, keystream); // Decrypt the ciphertext
+  output.innerHTML += "<p>Decrypted: " + binaryToText(decryptedText) + "</p>"; // Display decrypted plaintext
+}
+
+// Decrypts ciphertext
+function decrypt(ciphertext, keystream) {
+  let decryptedText = "";
+  for (let i = 0; i < ciphertext.length; i++) {
+    // XOR binary representations of ciphertext character and keystream bit
+    decryptedText += String(
+      Number(ciphertext[i]) ^ Number(keystream[i % keystream.length])
+    );
+  }
+  return decryptedText;
 }
