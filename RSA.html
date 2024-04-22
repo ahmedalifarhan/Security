@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RSA Encryption and Decryption</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #333333;
+      }
+
+      .input-section,
+      .output-section {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+
+      input {
+        width: 96%;
+        margin: 0 auto;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      #initial-message,
+      #encoded-message,
+      #decoded-message {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>RSA Encryption and Decryption Ahmed Ali Section_2</h1>
+
+      <div class="input-section">
+        <label for="message">Enter Message:</label>
+        <input id="message" rows="4" cols="50"></input>
+      </div>
+
+      <button onclick="encryptAndDecrypt()">Encrypt & Decrypt</button>
+
+      <div class="output-section">
+        <h2>Output:</h2>
+        <div id="initial-message"></div>
+        <div id="encoded-message"></div>
+        <div id="decoded-message"></div>
+      </div>
+    </div>
+
+    <script>
+// Set to store prime numbers
+let prime = new Set();
+let public_key = null;
+let private_key = null;
+let n = null;
+
+// Function to fill the prime 
+function primeFiller() {
+  let sieve = Array(2500).fill(true); 
+  sieve[0] = false;
+  sieve[1] = false;
+
+  // mark multiples of each prime as non-prime
+  for (let i = 2; i < 2500; i++) {
+    if (sieve[i]) {
+      for (let j = i * 2; j < 2500; j += i) {
+        sieve[j] = false;
+      }
+    }
+  }
+
+  // add prime numbers to the prime set
+  for (let i = 0; i < sieve.length; i++) {
+    if (sieve[i]) {
+      prime.add(i);
+    }
+  }
+}
+
+// Function to pick a random prime number from the prime set
+function pickRandomPrime() {
+  let arr = Array.from(prime);  
+  let k = Math.floor(Math.random() * arr.length); 
+  // console.log(k);
+  let ret = arr[k];  
+  // console.log(ret);
+  prime.delete(ret);  
+  return ret;  
+}
+
+// Function to generate public and private keys
+function setKeys() {
+  let prime1 = pickRandomPrime();  
+  let prime2 = pickRandomPrime(); 
+  n = prime1 * prime2;  
+  let fi = (prime1 - 1) * (prime2 - 1);  
+
+  // find public key 'e' 
+  let e = 2;
+  while (true) {
+    if (gcd(e, fi) === 1) {
+      break;
+    }
+    e++;
+  }
+  public_key = e; // set public key
+
+  // Find private key 'd'
+  let d = 2;
+  while (true) {
+    if ((d * e) % fi === 1) {
+      break;
+    }
+    d++;
+  }
+  private_key = d; // Set private key
+}
+
+// Function to calculate greatest common divisor 
+function gcd(a, b) {
+  if (b === 0) {
+    return a;
+  }
+  return gcd(b, a % b);
+}
+
+// Function to encrypt message using RSA algorithm
+function encrypt(message) {
+  let e = public_key;
+  let encrypted_text = 1;
+  while (e > 0) {
+    encrypted_text *= message;
+    encrypted_text %= n;
+    e--;
+  }
+  return encrypted_text;
+}
+
+// Function to decrypt encrypted text using RSA algorithm
+function decrypt(encrypted_text) {
+  let d = private_key;
+  let decrypted = 1;
+  while (d > 0) {
+    decrypted *= encrypted_text;
+    decrypted %= n;
+    d--;
+  }
+  return decrypted;
+}
+
+// function to encode message 
+function encoder(message) {
+  let encoded = [];
+  for (let i = 0; i < message.length; i++) {
+    encoded.push(encrypt(message.charCodeAt(i)));
+  }
+  return encoded;
+}
+
+// Function to decode encoded message 
+function decoder(encoded) {
+  let s = "";
+  for (let i = 0; i < encoded.length; i++) {
+    s += String.fromCharCode(decrypt(encoded[i]));
+  }
+  return s;
+}
+
+// Function to handle encryption and decryption process
+function encryptAndDecrypt() {
+  primeFiller();  
+  setKeys(); 
+
+  let message = document.getElementById("message").value;
+  let initialDiv = document.getElementById("initial-message");
+  let encodedDiv = document.getElementById("encoded-message");
+  let decodedDiv = document.getElementById("decoded-message");
+
+  initialDiv.textContent = "Initial message:\n" + message;
+
+  let coded = encoder(message);
+  let encodedStr = "The encoded message (encrypted by public key):\n" + coded.join(" ");
+  encodedDiv.textContent = encodedStr;
+
+  let decodedStr = "The decoded message (decrypted by private key):\n" + decoder(coded);
+  decodedDiv.textContent = decodedStr;
+}
+</script>
+
+  </body>
+</html>
